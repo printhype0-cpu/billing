@@ -1,0 +1,38 @@
+{
+  "name": "tech-wizardry-backend",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "start": "node --loader ts-node/esm src/main.ts",
+    "dev": "nodemon --watch src --ext ts,js,mjs,cjs,json --exec \"node --loader ts-node/esm src/main.ts\"",
+    "build": "tsc",
+    "start:prod": "node dist/main.js",
+    "db:init": "node --loader ts-node/esm src/scripts/init-db.ts",
+    "db:init:mysql": "node --loader ts-node/esm src/scripts/init-mysql.ts"
+  },
+  "dependencies": {
+    "@nestjs/common": "^10.3.10",
+    "@nestjs/config": "^4.0.3",
+    "@nestjs/core": "^10.3.10",
+    "@nestjs/platform-express": "^10.3.10",
+    "@nestjs/typeorm": "^11.0.0",
+    "class-transformer": "^0.5.1",
+    "class-validator": "^0.14.4",
+    "dotenv": "^17.3.1",
+    "express-rate-limit": "^8.2.1",
+    "helmet": "^8.1.0",
+    "jsonwebtoken": "^9.0.3",
+    "mysql2": "^3.18.1",
+    "reflect-metadata": "^0.1.13",
+    "rxjs": "^7.8.1",
+    "sqlite3": "^5.1.7",
+    "typeorm": "^0.3.28"
+  },
+  "devDependencies": {
+    "@types/jsonwebtoken": "^9.0.10",
+    "nodemon": "^3.0.2",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.6.3"
+  }
+}
