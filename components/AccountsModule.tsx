@@ -30,12 +30,13 @@ interface AccountsModuleProps {
   inventoryItems: InventoryItem[];
   setInventoryItems: React.Dispatch<React.SetStateAction<InventoryItem[]>>;
   view: 'ACCOUNTS' | 'ACCOUNTS_JOB_SHEET' | 'ACCOUNTS_CREATE_INVOICE' | 'ACCOUNTS_SYNC' | 'FINANCE_SALES' | 'FINANCE_PURCHASES';
+  notifySuccess?: (msg?: string) => void;
 }
 
 const AccountsModule: React.FC<AccountsModuleProps> = ({ 
   role, invoices, setInvoices, jobSheets, setJobSheets, 
   staffList, stores, onViewChange, purchaseOrders, 
-  setPurchaseOrders, inventoryItems, setInventoryItems, view 
+  setPurchaseOrders, inventoryItems, setInventoryItems, view, notifySuccess 
 }) => {
   const [showCreateInvoiceModal, setShowCreateInvoiceModal] = useState(view === 'ACCOUNTS_CREATE_INVOICE');
   const [editingInvoice, setEditingInvoice] = useState<Invoice | null>(null);
@@ -108,6 +109,63 @@ const AccountsModule: React.FC<AccountsModuleProps> = ({
     return items.reduce((sum, item) => sum + (item.qty * item.price), 0);
   };
 
+  if (view === 'ACCOUNTS' && invoices.length === 0) {
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center">
+        <div className="bg-white p-10 rounded-3xl border border-slate-200 shadow-sm text-center space-y-4">
+          <div className="mx-auto w-12 h-12 rounded-2xl bg-[#f65b13]/10 flex items-center justify-center text-[#f65b13]">
+            <Receipt />
+          </div>
+          <div className="space-y-1">
+            <h3 className="text-lg font-bold text-slate-800">No Invoices Yet</h3>
+            <p className="text-slate-500 text-sm">Create your first invoice to get started.</p>
+          </div>
+          <button onClick={() => setShowCreateInvoiceModal(true)} className="px-5 py-3 bg-[#000000] text-white rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-[#f65b13] transition-all active:scale-95">
+            Create Invoice
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (view === 'FINANCE_PURCHASES' && purchaseOrders.length === 0) {
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center">
+        <div className="bg-white p-10 rounded-3xl border border-slate-200 shadow-sm text-center space-y-4">
+          <div className="mx-auto w-12 h-12 rounded-2xl bg-[#f65b13]/10 flex items-center justify-center text-[#f65b13]">
+            <ShoppingCart />
+          </div>
+          <div className="space-y-1">
+            <h3 className="text-lg font-bold text-slate-800">No Purchase Orders</h3>
+            <p className="text-slate-500 text-sm">Add a purchase order to track incoming stock.</p>
+          </div>
+          <button onClick={() => setShowPOModal(true)} className="px-5 py-3 bg-[#000000] text-white rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-[#f65b13] transition-all active:scale-95">
+            New Purchase Order
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (view === 'ACCOUNTS_JOB_SHEET' && jobSheets.length === 0) {
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center">
+        <div className="bg-white p-10 rounded-3xl border border-slate-200 shadow-sm text-center space-y-4">
+          <div className="mx-auto w-12 h-12 rounded-2xl bg-[#f65b13]/10 flex items-center justify-center text-[#f65b13]">
+            <Wrench />
+          </div>
+          <div className="space-y-1">
+            <h3 className="text-lg font-bold text-slate-800">No Job Sheets</h3>
+            <p className="text-slate-500 text-sm">Create a service ticket to begin.</p>
+          </div>
+          <button onClick={() => setShowJobSheetModal(true)} className="px-5 py-3 bg-[#000000] text-white rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-[#f65b13] transition-all active:scale-95">
+            New Job Sheet
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   const handleSaveInvoice = (download: boolean = false) => {
     if (!invoiceFormData.customerName || itemLines.length === 0) return;
     
@@ -138,6 +196,7 @@ const AccountsModule: React.FC<AccountsModuleProps> = ({
     }
 
     handleClose();
+    notifySuccess && notifySuccess(editingInvoice ? 'Updated successfully' : 'Saved successfully');
   };
 
   const handleDownloadInvoice = (invoice: Invoice) => {
@@ -401,6 +460,7 @@ const AccountsModule: React.FC<AccountsModuleProps> = ({
      setPurchaseOrders(prev => [newPO, ...prev]);
      setShowPOModal(false);
      setPoFormData({ vendorName: '', date: new Date().toISOString().split('T')[0], items: [{ name: '', qty: 1, price: 0 }] });
+     notifySuccess && notifySuccess('Saved successfully');
   };
 
   const updatePOStatus = (poId: string, newStatus: PurchaseOrder['status']) => {
@@ -462,6 +522,7 @@ const AccountsModule: React.FC<AccountsModuleProps> = ({
         date: new Date().toISOString().split('T')[0],
         storeName: ''
     });
+    notifySuccess && notifySuccess(editingJobSheet ? 'Updated successfully' : 'Saved successfully');
   };
 
   const handleDeleteJobSheet = (id: string) => {

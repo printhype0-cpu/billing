@@ -15,13 +15,26 @@ const storage = (typeof window !== 'undefined' && window.localStorage)
 
 // Predefined users for the system
 const DEFAULT_USERS: User[] = [
-  { id: 'u1', name: 'Master Admin', role: 'MASTER_ADMIN', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Admin', email: 'admin@techwizardry.com' },
+  { id: 'u1', name: 'Master Admin', role: 'MASTER_ADMIN', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Admin', email: 'admin@tech2wizard.com' },
   { id: 'u2', name: 'Store Manager', role: 'STORE_MANAGER', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Manager', email: 'manager@techwizardry.com' },
   { id: 'u3', name: 'Inventory Lead', role: 'INVENTORY_LEAD', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Inventory', email: 'inventory@techwizardry.com' },
   { id: 'u4', name: 'Sales Head', role: 'SALES_HEAD', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Sales', email: 'sales@techwizardry.com' },
 ];
 
 export const authService = {
+  apiBase: (): string => {
+    // window override
+    // @ts-ignore
+    const winBase = (typeof window !== 'undefined' && (window as any).__API_BASE_URL__) || '';
+    // meta tag override
+    const metaBase = (typeof document !== 'undefined'
+      ? (document.querySelector('meta[name="api-base"]')?.getAttribute('content') || '')
+      : '');
+    // environment (bundled) override
+    // @ts-ignore
+    const envBase = (typeof process !== 'undefined' && ((process.env as any)?.NEXT_PUBLIC_API_BASE_URL || (process.env as any)?.API_BASE_URL)) || '';
+    return winBase || metaBase || envBase || '';
+  },
   hashPassword: (plain: string): string => {
     try {
       return btoa(`${plain}|${SALT}`);
@@ -35,6 +48,9 @@ export const authService = {
   getUsers: (): User[] => {
     const saved = storage.getItem(USERS_KEY);
     if (!saved) {
+      if (typeof process !== 'undefined' && process.env && process.env.NODE_ENV === 'production') {
+        return [];
+      }
       storage.setItem(USERS_KEY, JSON.stringify(DEFAULT_USERS));
       return DEFAULT_USERS;
     }
@@ -73,7 +89,9 @@ export const authService = {
 
   login: async (credentials: LoginCredentials): Promise<AuthUser> => {
     try {
-      const res = await fetch('http://localhost:4000/auth/login', {
+      const base = authService.apiBase();
+      const url = base ? `${base}/auth/login` : '/auth/login';
+      const res = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(credentials)
@@ -95,9 +113,12 @@ export const authService = {
       }
       return authUser;
     } catch {
-      // Fallback to local demo mode
+      if (typeof process !== 'undefined' && process.env && process.env.NODE_ENV === 'production') {
+        throw new Error('Login failed');
+      }
+      // Fallback to local demo mode (dev only)
       const users = authService.getUsers();
-      const user = users.find(u => u.email === credentials.email || (credentials.role && u.role === credentials.role));
+      const user = users.find(u => u.email === credentials.email);
       if (!user) {
         throw new Error('Invalid credentials');
       }

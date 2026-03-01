@@ -9,7 +9,8 @@
     "build": "tsc",
     "start:prod": "node dist/main.js",
     "db:init": "node --loader ts-node/esm src/scripts/init-db.ts",
-    "db:init:mysql": "node --loader ts-node/esm src/scripts/init-mysql.ts"
+    "db:init:mysql": "node --loader ts-node/esm src/scripts/init-mysql.ts",
+    "bootstrap:admin": "node --loader ts-node/esm src/scripts/bootstrap-admin.ts"
   },
   "dependencies": {
     "@nestjs/common": "^10.3.10",

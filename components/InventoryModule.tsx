@@ -42,6 +42,7 @@ interface InventoryModuleProps {
     | 'INVENTORY_RETURN_LOGS'
     | 'INVENTORY_MAIN'
     | 'INVENTORY_UPLOADS';
+  notifySuccess?: (msg?: string) => void;
 }
 
 interface InventoryFormLine {
@@ -57,7 +58,7 @@ interface InventoryFormLine {
 
 const InventoryModule: React.FC<InventoryModuleProps> = ({ 
   role, items, setItems, categories, setCategories, view = 'INVENTORY_MAIN', returnLogs = [], setReturnLogs,
-  stockTransfers = [], setStockTransfers, stores = [], vendors = [], setVendors
+  stockTransfers = [], setStockTransfers, stores = [], vendors = [], setVendors, notifySuccess
 }) => {
   const [showAddItemModal, setShowAddItemModal] = useState(false);
   const [showAddCategoryModal, setShowAddCategoryModal] = useState(false);
@@ -174,6 +175,7 @@ const InventoryModule: React.FC<InventoryModuleProps> = ({
         setItems(prev => [...prev, ...newItems]);
     }
     handleCloseModal();
+    notifySuccess && notifySuccess(editingId ? 'Updated successfully' : 'Saved successfully');
   };
 
   const downloadCsvTemplate = () => {
@@ -353,6 +355,7 @@ const InventoryModule: React.FC<InventoryModuleProps> = ({
     setVendors(prev => [...prev, newVendor]);
     setNewVendorData({ name: '', contactPerson: '', phone: '', email: '', address: '', gstIn: '', status: 'Active', rating: 5.0 });
     setShowAddVendorModal(false);
+    notifySuccess && notifySuccess('Vendor saved');
   };
 
   const handleEditItem = (item: InventoryItem) => {
@@ -396,6 +399,7 @@ const InventoryModule: React.FC<InventoryModuleProps> = ({
       setCategories(prev => [...prev, newCategoryName.trim()]);
       setNewCategoryName('');
       setShowAddCategoryModal(false);
+      notifySuccess && notifySuccess('Category added');
     }
   };
 
@@ -408,6 +412,25 @@ const InventoryModule: React.FC<InventoryModuleProps> = ({
         setCategories(prev => prev.filter(c => c !== cat));
     }
   };
+
+  if (view === 'INVENTORY_MAIN' && items.length === 0) {
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center">
+        <div className="bg-white p-10 rounded-3xl border border-slate-200 shadow-sm text-center space-y-4">
+          <div className="mx-auto w-12 h-12 rounded-2xl bg-[#f65b13]/10 flex items-center justify-center text-[#f65b13]">
+            <Package />
+          </div>
+          <div className="space-y-1">
+            <h3 className="text-lg font-bold text-slate-800">No Inventory Yet</h3>
+            <p className="text-slate-500 text-sm">Start by adding your first item.</p>
+          </div>
+          <button onClick={() => setShowAddItemModal(true)} className="px-5 py-3 bg-[#000000] text-white rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-[#f65b13] transition-all active:scale-95">
+            Add Items
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   const handleInitiateTransfer = () => {
     if (!transferData.itemId || !transferData.source || !transferData.destination || transferData.quantity <= 0) {

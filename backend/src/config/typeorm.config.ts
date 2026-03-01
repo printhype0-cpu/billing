@@ -1,6 +1,7 @@
 import { TypeOrmModuleOptions } from '@nestjs/typeorm';
 import { User } from '../entities/user.entity.js';
 import { InventoryItem } from '../entities/inventory.entity.js';
+import { UserPassword } from '../entities/user-password.entity.js';
 import path from 'path';
 
 export function buildTypeOrmConfig(): TypeOrmModuleOptions {
@@ -14,7 +15,7 @@ export function buildTypeOrmConfig(): TypeOrmModuleOptions {
       username: MYSQL_USER,
       password: MYSQL_PASSWORD || '',
       database: MYSQL_DB,
-      entities: [User, InventoryItem],
+      entities: [User, InventoryItem, UserPassword],
       synchronize: !isProd,
       logging: false
     };
@@ -26,7 +27,7 @@ export function buildTypeOrmConfig(): TypeOrmModuleOptions {
   return {
     type: 'sqlite',
     database: dbPath,
-    entities: [User, InventoryItem],
+    entities: [User, InventoryItem, UserPassword],
     synchronize: true,
     logging: false
   };

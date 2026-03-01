@@ -18,12 +18,13 @@ interface HRModuleProps {
   attendanceData?: AttendanceRecord[];
   setAttendanceData?: React.Dispatch<React.SetStateAction<AttendanceRecord[]>>;
   view?: 'ATTENDANCE' | 'STAFF' | 'CANDIDATES' | 'ONBOARDING' | 'STORE_ATTENDANCE' | 'TIMING';
+  notifySuccess?: (msg?: string) => void;
 }
 
 const AVAILABLE_STORES = ['Head Office', 'Downtown Branch', 'Northgate Branch'];
 
 const HRModule: React.FC<HRModuleProps> = ({ 
-  role, staffList, setStaffList, candidates, setCandidates, attendanceData = [], setAttendanceData, view = 'STAFF' 
+  role, staffList, setStaffList, candidates, setCandidates, attendanceData = [], setAttendanceData, view = 'STAFF', notifySuccess 
 }) => {
   const [showAddStaffModal, setShowAddStaffModal] = useState(false);
   const [showAddCandidateModal, setShowAddCandidateModal] = useState(false);
@@ -227,6 +228,7 @@ const HRModule: React.FC<HRModuleProps> = ({
         setStaffList(prev => [...prev, newStaff]);
     }
     setShowAddStaffModal(false);
+    notifySuccess && notifySuccess('Updated successfully');
   };
 
   const handleDeleteStaff = (id: string) => {
@@ -256,6 +258,7 @@ const HRModule: React.FC<HRModuleProps> = ({
       documents: []
     });
     setShowAddCandidateModal(false);
+    notifySuccess && notifySuccess('Saved successfully');
   };
 
   const handleDeleteCandidate = (id: string) => {
@@ -350,6 +353,44 @@ const HRModule: React.FC<HRModuleProps> = ({
       </div>
     );
   };
+
+  if (view === 'STAFF' && staffList.length === 0) {
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center">
+        <div className="bg-white p-10 rounded-3xl border border-slate-200 shadow-sm text-center space-y-4">
+          <div className="mx-auto w-12 h-12 rounded-2xl bg-[#f65b13]/10 flex items-center justify-center text-[#f65b13]">
+            <UserPlus />
+          </div>
+          <div className="space-y-1">
+            <h3 className="text-lg font-bold text-slate-800">No Staff Yet</h3>
+            <p className="text-slate-500 text-sm">Add your first team member.</p>
+          </div>
+          <button onClick={() => setShowAddStaffModal(true)} className="px-5 py-3 bg-[#000000] text-white rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-[#f65b13] transition-all active:scale-95">
+            Add Staff
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (view === 'CANDIDATES' && candidates.length === 0) {
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center">
+        <div className="bg-white p-10 rounded-3xl border border-slate-200 shadow-sm text-center space-y-4">
+          <div className="mx-auto w-12 h-12 rounded-2xl bg-[#f65b13]/10 flex items-center justify-center text-[#f65b13]">
+            <UserPlus />
+          </div>
+          <div className="space-y-1">
+            <h3 className="text-lg font-bold text-slate-800">No Candidates</h3>
+            <p className="text-slate-500 text-sm">Add a candidate to start hiring.</p>
+          </div>
+          <button onClick={() => setShowAddCandidateModal(true)} className="px-5 py-3 bg-[#000000] text-white rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-[#f65b13] transition-all active:scale-95">
+            Add Candidate
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

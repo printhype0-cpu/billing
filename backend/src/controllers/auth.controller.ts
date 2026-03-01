@@ -8,9 +8,8 @@ import { IsEmail, IsOptional, IsString, IsIn } from 'class-validator';
 type Role = 'MASTER_ADMIN' | 'STORE_MANAGER' | 'INVENTORY_LEAD' | 'SALES_HEAD';
 
 class LoginDto {
-  @IsOptional()
   @IsEmail()
-  email?: string;
+  email!: string;
   @IsOptional()
   @IsString()
   password?: string;
@@ -19,34 +18,31 @@ class LoginDto {
   role?: Role;
 }
 
-const DEFAULT_USERS = [
-  { id: 'u1', name: 'Master Admin', role: 'MASTER_ADMIN', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Admin', email: 'admin@techwizardry.com' },
-  { id: 'u2', name: 'Store Manager', role: 'STORE_MANAGER', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Manager', email: 'manager@techwizardry.com' },
-  { id: 'u3', name: 'Inventory Lead', role: 'INVENTORY_LEAD', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Inventory', email: 'inventory@techwizardry.com' },
-  { id: 'u4', name: 'Sales Head', role: 'SALES_HEAD', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Sales', email: 'sales@techwizardry.com' }
-];
-
 @Controller('auth')
 export class AuthController {
   constructor(private readonly users: UsersService) {}
 
   @Post('login')
   async login(@Body() body: LoginDto) {
-    const user =
-      (await this.users.findByEmailOrRole(body.email, body.role)) ||
-      findByEmailOrRole(body.email, body.role) ||
-      DEFAULT_USERS.find(u => u.email === body.email || (body.role && u.role === body.role));
+    const email = body.email;
+    let user =
+      (await this.users.findByEmailOrRole(email, undefined));
+    if (!user && process.env.NODE_ENV !== 'production') {
+      user = findByEmailOrRole(email, undefined);
+    }
     if (!user) {
       return { error: 'Invalid credentials' };
     }
-    if (user.role === 'MASTER_ADMIN') {
-      if (!body.password) return { error: 'Password required' };
-    }
+    // determine password requirement using dedicated password store when available
     // @ts-ignore
-    if (user.passwordHash || user.role === 'MASTER_ADMIN') {
-      // @ts-ignore
-      const match = body.password ? hashPassword(body.password) === user.passwordHash : false;
-      if (!match) return { error: 'Invalid credentials' };
+    const storedHash = await (this.users as any).getPasswordHash?.(user.id);
+    // @ts-ignore
+    const requiresPassword = !!storedHash || user.role === 'MASTER_ADMIN';
+    if (requiresPassword) {
+      if (!body.password) return { error: 'Password required' };
+      if (!storedHash) return { error: 'Password required' };
+      const match = hashPassword(body.password) === storedHash;
+      if (!match) return { error: 'Password incorrect' };
     }
     const token = sign({ sub: user.id, role: user.role });
     return { user: { ...user, token } };
@@ -59,7 +55,7 @@ export class AuthController {
     const payload = verify(token) as { sub?: string } | null;
     if (!payload?.sub) return { error: 'Unauthorized' };
     const userId = payload.sub;
-    const user = findById(userId);
+    const user = process.env.NODE_ENV !== 'production' ? findById(userId) : await this.users.findById(userId);
     if (!user) return { error: 'Unauthorized' };
     return { user: { ...user, token } };
   }

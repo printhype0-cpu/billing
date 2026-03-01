@@ -21,6 +21,12 @@ async function main() {
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
   `);
   await conn.query(`
+    CREATE TABLE IF NOT EXISTS user_passwords (
+      userId VARCHAR(64) PRIMARY KEY,
+      passwordHash VARCHAR(128) NULL
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+  `);
+  await conn.query(`
     CREATE TABLE IF NOT EXISTS inventory_items (
       id VARCHAR(64) PRIMARY KEY,
       name VARCHAR(255) NOT NULL,
@@ -34,16 +40,13 @@ async function main() {
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
   `);
   await conn.query(`
-    INSERT IGNORE INTO users (id, name, role, avatar, email) VALUES
-    ('u1','Master Admin','MASTER_ADMIN','https://api.dicebear.com/7.x/avataaars/svg?seed=Admin','admin@techwizardry.com'),
-    ('u2','Store Manager','STORE_MANAGER','https://api.dicebear.com/7.x/avataaars/svg?seed=Manager','manager@techwizardry.com'),
-    ('u3','Inventory Lead','INVENTORY_LEAD','https://api.dicebear.com/7.x/avataaars/svg?seed=Inventory','inventory@techwizardry.com'),
-    ('u4','Sales Head','SALES_HEAD','https://api.dicebear.com/7.x/avataaars/svg?seed=Sales','sales@techwizardry.com');
+    -- No demo seed inserts in production initializer
   `);
   await conn.query(`
-    INSERT IGNORE INTO inventory_items (id, name, category, sku, quantityHO, quantityStore, price, vendor, reorderLevel) VALUES
-    ('101','iPhone 15 Screen','Parts','PRT-IP15-SCR',120,20,12000,'Imported',10),
-    ('102','Samsung S24 Battery','Parts','PRT-S24-BAT',80,15,6500,'Samsung',15);
+    -- No demo password seeds
+  `);
+  await conn.query(`
+    -- No demo inventory seeds
   `);
   await conn.end();
   // eslint-disable-next-line no-console

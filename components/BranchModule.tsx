@@ -18,6 +18,7 @@ interface BranchModuleProps {
   staffList: Staff[];
   setStaffList: React.Dispatch<React.SetStateAction<Staff[]>>;
   view: 'MANAGE_BRANCH_DETAILS' | 'MANAGE_BRANCH_STAFF' | 'MANAGE_BRANCH_ACCESS';
+  notifySuccess?: (msg?: string) => void;
 }
 
 // Enhanced Permission Structures
@@ -39,7 +40,7 @@ interface RoleAccess {
   permissions: Record<string, ModulePermission>; // Module Key -> Permissions
 }
 
-const BranchModule: React.FC<BranchModuleProps> = ({ role, stores, setStores, staffList, setStaffList, view }) => {
+const BranchModule: React.FC<BranchModuleProps> = ({ role, stores, setStores, staffList, setStaffList, view, notifySuccess }) => {
   const [editingStore, setEditingStore] = useState<any | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
   const [formData, setFormData] = useState({ name: '', address: '', phone: '', gst: '' });
@@ -135,6 +136,7 @@ const BranchModule: React.FC<BranchModuleProps> = ({ role, stores, setStores, st
     }
     setFormData({ name: '', address: '', phone: '', gst: '' });
     setShowAddModal(false);
+    notifySuccess && notifySuccess(editingStore ? 'Updated successfully' : 'Saved successfully');
   };
 
   const toggleStatus = (id: string) => {
@@ -187,6 +189,25 @@ const BranchModule: React.FC<BranchModuleProps> = ({ role, stores, setStores, st
         };
     });
   };
+
+  if (stores.length === 0 && view === 'MANAGE_BRANCH_DETAILS') {
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center">
+        <div className="bg-white p-10 rounded-3xl border border-slate-200 shadow-sm text-center space-y-4">
+          <div className="mx-auto w-12 h-12 rounded-2xl bg-[#f65b13]/10 flex items-center justify-center text-[#f65b13]">
+            <Building2 />
+          </div>
+          <div className="space-y-1">
+            <h3 className="text-lg font-bold text-slate-800">No Branches Found</h3>
+            <p className="text-slate-500 text-sm">Add your first branch to begin.</p>
+          </div>
+          <button onClick={() => setShowAddModal(true)} className="px-5 py-3 bg-[#000000] text-white rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-[#f65b13] transition-all active:scale-95">
+            Add Branch
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   const saveRoleConfiguration = () => {
       if (!configuringRole) return;

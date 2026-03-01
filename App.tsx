@@ -9,7 +9,7 @@ import AccountsModule from './components/AccountsModule.tsx';
 import BranchModule from './components/BranchModule.tsx';
 import SettingsModule from './components/SettingsModule.tsx';
 import LandingPage from './components/LandingPage.tsx';
-import { Shield, ShieldCheck, Lock, ArrowRight, Sparkles, Zap, Building2, UserCircle, Box, Receipt, ChevronDown } from 'lucide-react';
+import { Shield, ShieldCheck, Lock, ArrowRight, Sparkles, Zap, Building2, UserCircle, Box, Receipt, ChevronDown, Eye, EyeOff } from 'lucide-react';
 import { MOCK_STAFF, MOCK_INVENTORY, MOCK_INVOICES, MOCK_CANDIDATES, MOCK_JOB_SHEETS, MOCK_PURCHASES, MOCK_VENDORS, PERMISSIONS_MATRIX } from './constants.ts';
 import { authService } from './src/services/authService.ts';
 import { dbService } from './services/db.ts';
@@ -17,6 +17,7 @@ import { dbService } from './services/db.ts';
 const Login: React.FC<{ onLogin: (user: AuthUser) => void; onBack: () => void }> = ({ onLogin, onBack }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [role, setRole] = useState<Role>('MASTER_ADMIN');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -67,8 +68,8 @@ const Login: React.FC<{ onLogin: (user: AuthUser) => void; onBack: () => void }>
       const creds: LoginCredentials = { email, password, role };
       const user = await authService.login(creds);
       onLogin(user);
-    } catch {
-      setError('Invalid credentials');
+    } catch (e: any) {
+      setError(e?.message || 'Invalid credentials');
     } finally {
       setLoading(false);
     }
@@ -108,7 +109,7 @@ const Login: React.FC<{ onLogin: (user: AuthUser) => void; onBack: () => void }>
                   type="email" 
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="admin@techwizardry.com" 
+                  placeholder="admin@tech2wizard.com" 
                   className="flex-1 bg-transparent text-white placeholder-slate-500 text-sm focus:outline-none"
                   required
                 />
@@ -118,12 +119,19 @@ const Login: React.FC<{ onLogin: (user: AuthUser) => void; onBack: () => void }>
                   <Lock className="w-5 h-5 text-[#f65b13]" />
                 </div>
                 <input 
-                  type="password" 
+                  type={showPassword ? 'text' : 'password'} 
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••" 
                   className="flex-1 bg-transparent text-white placeholder-slate-500 text-sm focus:outline-none"
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="p-2 text-slate-500 hover:text-[#f65b13] transition-colors"
+                >
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
               </div>
               <div ref={roleMenuRef} className="relative flex items-center p-4 bg-white/5 border border-white/10 rounded-2xl">
                 <div className="p-2 bg-[#f65b13]/20 rounded-xl mr-4">
@@ -203,29 +211,35 @@ const App: React.FC<{ initialView?: View }> = ({ initialView }) => {
     return saved || 'DASHBOARD';
   });
 
-  const [staffList, setStaffList] = useState<Staff[]>(() => getSaved('crm_staff', MOCK_STAFF));
-  const [candidates, setCandidates] = useState<Candidate[]>(() => getSaved('crm_candidates', MOCK_CANDIDATES));
-  const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>(() => getSaved('crm_inventory', MOCK_INVENTORY));
-  const [inventoryCategories, setInventoryCategories] = useState<string[]>(() => getSaved('crm_inventory_categories', ['Parts', 'Accessories', 'Tools', 'Devices', 'General']));
-  const [invoices, setInvoices] = useState<Invoice[]>(() => getSaved('crm_invoices', MOCK_INVOICES));
-  const [jobSheets, setJobSheets] = useState<JobSheet[]>(() => getSaved('crm_jobsheets', MOCK_JOB_SHEETS));
+  const DEV = process.env.NODE_ENV !== 'production';
+  const [staffList, setStaffList] = useState<Staff[]>(() => getSaved('crm_staff', DEV ? MOCK_STAFF : []));
+  const [candidates, setCandidates] = useState<Candidate[]>(() => getSaved('crm_candidates', DEV ? MOCK_CANDIDATES : []));
+  const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>(() => getSaved('crm_inventory', DEV ? MOCK_INVENTORY : []));
+  const [inventoryCategories, setInventoryCategories] = useState<string[]>(() => getSaved('crm_inventory_categories', DEV ? ['Parts', 'Accessories', 'Tools', 'Devices', 'General'] : []));
+  const [invoices, setInvoices] = useState<Invoice[]>(() => getSaved('crm_invoices', DEV ? MOCK_INVOICES : []));
+  const [jobSheets, setJobSheets] = useState<JobSheet[]>(() => getSaved('crm_jobsheets', DEV ? MOCK_JOB_SHEETS : []));
   const [attendanceData, setAttendanceData] = useState<AttendanceRecord[]>(() => getSaved('crm_attendance', []));
-  const [purchaseOrders, setPurchaseOrders] = useState<PurchaseOrder[]>(() => getSaved('crm_purchases', MOCK_PURCHASES));
-  const [vendors, setVendors] = useState<Vendor[]>(() => getSaved('crm_vendors', MOCK_VENDORS));
-  const [stockTransfers, setStockTransfers] = useState<StockTransfer[]>(() => getSaved('crm_transfers', [
+  const [purchaseOrders, setPurchaseOrders] = useState<PurchaseOrder[]>(() => getSaved('crm_purchases', DEV ? MOCK_PURCHASES : []));
+  const [vendors, setVendors] = useState<Vendor[]>(() => getSaved('crm_vendors', DEV ? MOCK_VENDORS : []));
+  const [stockTransfers, setStockTransfers] = useState<StockTransfer[]>(() => getSaved('crm_transfers', DEV ? [
     { id: 'TRF-001', itemId: '101', itemName: 'iPhone 15 Screen', sku: 'PRT-IP15-SCR', quantity: 20, source: 'Head Office', destination: 'Downtown Branch', status: 'In-Transit', initiatedBy: 'MASTER_ADMIN', date: '2023-11-20' },
     { id: 'TRF-002', itemId: '102', itemName: 'Samsung S24 Battery', sku: 'PRT-S24-BAT', quantity: 15, source: 'Head Office', destination: 'Northgate Branch', status: 'Pending', initiatedBy: 'MASTER_ADMIN', date: '2023-11-22' }
-  ]));
-  const [returnLogs, setReturnLogs] = useState(() => getSaved('crm_returns', [
+  ] : []));
+  const [returnLogs, setReturnLogs] = useState(() => getSaved('crm_returns', DEV ? [
     { id: 'RET-001', customerName: 'Sameer Khan', itemName: 'iPhone 15 Screen', sku: 'PRT-IP15-SCR', date: '2023-11-20', reason: 'Defective Digitizer', status: 'Processed', actionTaken: 'Replacement' },
     { id: 'RET-002', customerName: 'Anita Desai', itemName: 'USB-C Cable', sku: 'ACC-USBC-2M', date: '2023-11-22', reason: 'Wrong Length Ordered', status: 'Pending', actionTaken: 'Refund' }
-  ]));
-  const [stores, setStores] = useState(() => getSaved('crm_stores', [
+  ] : []));
+  const [stores, setStores] = useState(() => getSaved('crm_stores', DEV ? [
     { id: '1', name: 'Downtown Branch', address: '123 Main St, Cityville', phone: '(555) 123-4567', gst: 'GST-001', manager: 'Alice Johnson', active: true },
     { id: '2', name: 'Northgate Branch', address: '456 North Ave, Uptown', phone: '(555) 987-6543', gst: 'GST-002', manager: 'Open Position', active: true },
     { id: '3', name: 'Head Office', address: '789 Corporate Way, Tech Park', phone: '(555) 555-0100', gst: 'GST-HQ-01', manager: 'Admin', active: true },
-  ]));
+  ] : []));
   const [syncEnabled, setSyncEnabled] = useState(false);
+  const [toast, setToast] = useState<string | null>(null);
+  const notifySuccess = (msg: string = 'Saved successfully') => {
+    setToast(msg);
+    window.setTimeout(() => setToast(null), 1500);
+  };
 
   useEffect(() => {
     if (role) localStorage.setItem('crm_user_role', role);
@@ -366,9 +380,10 @@ const App: React.FC<{ initialView?: View }> = ({ initialView }) => {
       setStockTransfers,
       stores,
       vendors,
-      setVendors
+      setVendors,
+      notifySuccess
     };
-    const commonHRProps = { role, staffList, setStaffList, candidates, setCandidates, attendanceData, setAttendanceData };
+    const commonHRProps = { role, staffList, setStaffList, candidates, setCandidates, attendanceData, setAttendanceData, notifySuccess };
     const commonAccountsProps = { 
       role, 
       invoices, 
@@ -383,9 +398,10 @@ const App: React.FC<{ initialView?: View }> = ({ initialView }) => {
       purchaseOrders, 
       setPurchaseOrders,
       inventoryItems,
-      setInventoryItems
+      setInventoryItems,
+      notifySuccess
     };
-    const commonBranchProps = { role, stores, setStores, staffList, setStaffList };
+    const commonBranchProps = { role, stores, setStores, staffList, setStaffList, notifySuccess };
 
     switch (currentView) {
       case 'DASHBOARD': return <Dashboard role={role} invoices={invoices} />;
@@ -415,7 +431,7 @@ const App: React.FC<{ initialView?: View }> = ({ initialView }) => {
       case 'MANAGE_BRANCH_DETAILS': return <BranchModule {...commonBranchProps} view="MANAGE_BRANCH_DETAILS" />;
       case 'MANAGE_BRANCH_STAFF': return <BranchModule {...commonBranchProps} view="MANAGE_BRANCH_STAFF" />;
       case 'MANAGE_BRANCH_ACCESS': return <BranchModule {...commonBranchProps} view="MANAGE_BRANCH_ACCESS" />;
-      case 'SETTINGS': return <SettingsModule role={role} />;
+      case 'SETTINGS': return <SettingsModule role={role} notifySuccess={notifySuccess} />;
       default: return <Dashboard role={role} invoices={invoices} />;
     }
   };
@@ -423,6 +439,13 @@ const App: React.FC<{ initialView?: View }> = ({ initialView }) => {
   return (
     <Layout currentRole={role} currentView={currentView} onChangeView={setCurrentView} onLogout={handleLogout}>
       {renderContent()}
+      {toast && (
+        <div className="fixed right-6 bottom-6 z-[100]">
+          <div className="bg-emerald-600 text-white px-5 py-3 rounded-2xl shadow-2xl text-sm font-black uppercase tracking-widest">
+            {toast}
+          </div>
+        </div>
+      )}
     </Layout>
   );
 };

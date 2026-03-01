@@ -9,13 +9,14 @@ import { User } from './entities/user.entity.js';
 import { InventoryItem } from './entities/inventory.entity.js';
 import { UsersService } from './services/users.service.js';
 import { InventoryService } from './services/inventory.service.js';
+import { UserPassword } from './entities/user-password.entity.js';
 
 const typeOrmConfig = buildTypeOrmConfig();
 
 @Module({
   imports: [
     TypeOrmModule.forRoot(typeOrmConfig),
-    TypeOrmModule.forFeature([User, InventoryItem])
+    TypeOrmModule.forFeature([User, InventoryItem, UserPassword])
   ],
   controllers: [AppController, AuthController, UsersController, InventoryController],
   providers: [UsersService, InventoryService]

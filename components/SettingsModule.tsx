@@ -1,17 +1,18 @@
 
 import React, { useRef, useState } from 'react';
 import { Role } from '../types.ts';
-import { User, Globe, Bell, Shield, Moon, Sun, Lock, Smartphone, Mail, Laptop, Download, UploadCloud, RefreshCcw } from 'lucide-react';
+import { User, Globe, Bell, Shield, Moon, Sun, Lock, Smartphone, Mail, Laptop, Download, UploadCloud, RefreshCcw, Eye, EyeOff } from 'lucide-react';
 import { dbService } from '../services/db.ts';
 import { authService } from '../src/services/authService.ts';
 
 interface SettingsModuleProps {
   role: Role;
+  notifySuccess?: (msg?: string) => void;
 }
 
 type SettingsTab = 'general' | 'security' | 'notifications';
 
-const SettingsModule: React.FC<SettingsModuleProps> = ({ role }) => {
+const SettingsModule: React.FC<SettingsModuleProps> = ({ role, notifySuccess }) => {
   const [activeTab, setActiveTab] = useState<SettingsTab>('general');
   const [isBackingUp, setIsBackingUp] = useState(false);
   const [isRestoring, setIsRestoring] = useState(false);
@@ -19,10 +20,14 @@ const SettingsModule: React.FC<SettingsModuleProps> = ({ role }) => {
   const [users, setUsers] = useState(authService.getUsers());
   const [passwordInputs, setPasswordInputs] = useState<Record<string, string>>({});
   const [passwordConfirmInputs, setPasswordConfirmInputs] = useState<Record<string, string>>({});
+  const [showPasswordInputs, setShowPasswordInputs] = useState<Record<string, boolean>>({});
+  const [showPasswordConfirmInputs, setShowPasswordConfirmInputs] = useState<Record<string, boolean>>({});
   const [feedback, setFeedback] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [currentCredential, setCurrentCredential] = useState('');
+  const [showCurrentCredential, setShowCurrentCredential] = useState(false);
   const [newSecret, setNewSecret] = useState('');
+  const [showNewSecret, setShowNewSecret] = useState(false);
   const avatarInputRef = useRef<HTMLInputElement>(null);
 
   const handleBackup = async () => {
@@ -89,6 +94,7 @@ const SettingsModule: React.FC<SettingsModuleProps> = ({ role }) => {
       setPasswordConfirmInputs(prev => ({ ...prev, [id]: '' }));
       setFeedback('Password updated');
       setTimeout(() => setFeedback(null), 1500);
+      notifySuccess && notifySuccess('Password updated');
     }
   };
 
@@ -104,7 +110,7 @@ const SettingsModule: React.FC<SettingsModuleProps> = ({ role }) => {
       if (!session) {
         try {
           session = await authService.login({
-            email: 'admin@techwizardry.com',
+            email: 'admin@tech2wizard.com',
             role: 'MASTER_ADMIN',
             password: currentCredential || undefined
           } as any);
@@ -130,6 +136,7 @@ const SettingsModule: React.FC<SettingsModuleProps> = ({ role }) => {
         setNewSecret('');
         setFeedback('Security key updated');
         setTimeout(() => setFeedback(null), 1500);
+        notifySuccess && notifySuccess('Security key updated');
       } else {
         setErrorMsg('Failed to update security key.');
       }
@@ -328,11 +335,41 @@ const SettingsModule: React.FC<SettingsModuleProps> = ({ role }) => {
                  <div className="max-w-md space-y-6">
                     <div>
                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Current Credential</label>
-                       <input type="password" value={currentCredential} onChange={e => setCurrentCredential(e.target.value)} className="w-full p-4 border border-slate-200 rounded-2xl text-sm font-black tracking-widest" placeholder="••••••••" />
+                       <div className="relative">
+                          <input 
+                             type={showCurrentCredential ? 'text' : 'password'} 
+                             value={currentCredential} 
+                             onChange={e => setCurrentCredential(e.target.value)} 
+                             className="w-full p-4 border border-slate-200 rounded-2xl text-sm font-black tracking-widest pr-12" 
+                             placeholder="••••••••" 
+                          />
+                          <button
+                             type="button"
+                             onClick={() => setShowCurrentCredential(!showCurrentCredential)}
+                             className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                          >
+                             {showCurrentCredential ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                          </button>
+                       </div>
                     </div>
                     <div>
                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">New Architectural Secret</label>
-                       <input type="password" value={newSecret} onChange={e => setNewSecret(e.target.value)} className="w-full p-4 border border-slate-200 rounded-2xl text-sm font-black tracking-widest" placeholder="••••••••" />
+                       <div className="relative">
+                          <input 
+                             type={showNewSecret ? 'text' : 'password'} 
+                             value={newSecret} 
+                             onChange={e => setNewSecret(e.target.value)} 
+                             className="w-full p-4 border border-slate-200 rounded-2xl text-sm font-black tracking-widest pr-12" 
+                             placeholder="••••••••" 
+                          />
+                          <button
+                             type="button"
+                             onClick={() => setShowNewSecret(!showNewSecret)}
+                             className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                          >
+                             {showNewSecret ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                          </button>
+                       </div>
                     </div>
                     <button onClick={handleUpdateSecurityKey} className="px-8 py-4 bg-[#000000] text-white rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-slate-900 transition-all shadow-xl active:scale-95">Update Security Key</button>
                  </div>
@@ -369,20 +406,38 @@ const SettingsModule: React.FC<SettingsModuleProps> = ({ role }) => {
                           <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest">{u.email || 'no-email'}</p>
                         </div>
                         <div className="flex items-center gap-3">
-                          <input 
-                            type="password" 
-                            value={passwordInputs[u.id] || ''} 
-                            onChange={e => setPasswordInputs(prev => ({ ...prev, [u.id]: e.target.value }))} 
-                            placeholder="Set password" 
-                            className="p-3 border border-slate-200 rounded-xl text-xs font-bold outline-none bg-white"
-                          />
-                          <input 
-                            type="password" 
-                            value={passwordConfirmInputs[u.id] || ''} 
-                            onChange={e => setPasswordConfirmInputs(prev => ({ ...prev, [u.id]: e.target.value }))} 
-                            placeholder="Confirm" 
-                            className="p-3 border border-slate-200 rounded-xl text-xs font-bold outline-none bg-white"
-                          />
+                          <div className="relative">
+                            <input 
+                              type={showPasswordInputs[u.id] ? 'text' : 'password'} 
+                              value={passwordInputs[u.id] || ''} 
+                              onChange={e => setPasswordInputs(prev => ({ ...prev, [u.id]: e.target.value }))} 
+                              placeholder="Set password" 
+                              className="p-3 border border-slate-200 rounded-xl text-xs font-bold outline-none bg-white pr-10"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => setShowPasswordInputs(prev => ({ ...prev, [u.id]: !prev[u.id] }))}
+                              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                            >
+                              {showPasswordInputs[u.id] ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                            </button>
+                          </div>
+                          <div className="relative">
+                            <input 
+                              type={showPasswordConfirmInputs[u.id] ? 'text' : 'password'} 
+                              value={passwordConfirmInputs[u.id] || ''} 
+                              onChange={e => setPasswordConfirmInputs(prev => ({ ...prev, [u.id]: e.target.value }))} 
+                              placeholder="Confirm" 
+                              className="p-3 border border-slate-200 rounded-xl text-xs font-bold outline-none bg-white pr-10"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => setShowPasswordConfirmInputs(prev => ({ ...prev, [u.id]: !prev[u.id] }))}
+                              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                            >
+                              {showPasswordConfirmInputs[u.id] ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                            </button>
+                          </div>
                           <button 
                             onClick={() => handleSetPassword(u.id)} 
                             className="px-4 py-2 bg-black text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-900 transition-all shadow-sm disabled:opacity-50"
