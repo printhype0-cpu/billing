@@ -1,0 +1,102 @@
+2026-03-05T23:07:58.878Z INFO Is remote: false
+2026-03-05T23:07:58.880Z INFO Starting Local. Installation path: c:\Users\Digital adwords\Downloads\tech-wizardry-pvt-ltd (3)
+2026-03-05T23:07:58.882Z INFO [MainProvider] Creating new MainProvider instance...
+2026-03-05T23:07:58.884Z INFO [TabsManager] Code view listener set up at initialization
+2026-03-05T23:07:58.886Z INFO Installation path exists: c:\Users\Digital adwords\Downloads\tech-wizardry-pvt-ltd (3)
+2026-03-05T23:07:58.887Z INFO Initializing database with URL: file:c:\Users\Digital adwords\Downloads\tech-wizardry-pvt-ltd (3)\pythagora-core\data\database\pythagora.db
+2026-03-05T23:07:58.902Z INFO New database detected, running full prisma setup...
+2026-03-05T23:07:58.903Z INFO [c:\Users\Digital adwords\.vscode\extensions\pythagoratechnologies.pythagora-vs-code-2.6.19] Project root:
+2026-03-05T23:07:58.904Z INFO [c:\Users\Digital adwords\.vscode\extensions\pythagoratechnologies.pythagora-vs-code-2.6.19\prisma\schema.prisma] Schema path:
+2026-03-05T23:07:58.904Z INFO [file:c:\Users\Digital adwords\Downloads\tech-wizardry-pvt-ltd (3)\pythagora-core\data\database\pythagora.db] Database URL:
+2026-03-05T23:07:58.906Z INFO [true] Schema exists:
+2026-03-05T23:07:58.906Z INFO Running prisma generate first...
+2026-03-05T23:08:04.655Z INFO [Prisma schema loaded from prisma\schema.prisma
+
+✔ Generated Prisma Client (6.19.1) to .\src\generated\prisma in 566ms
+
+] Prisma generate result:
+2026-03-05T23:08:04.656Z INFO Running prisma db push to sync schema...
+2026-03-05T23:08:09.147Z INFO [Prisma schema loaded from prisma\schema.prisma
+Datasource "db": SQLite database "pythagora.db" at "file:c:\Users\Digital adwords\Downloads\tech-wizardry-pvt-ltd (3)\pythagora-core\data\database\pythagora.db"
+
+SQLite database pythagora.db created at file:c:\Users\Digital adwords\Downloads\tech-wizardry-pvt-ltd (3)\pythagora-core\data\database\pythagora.db
+
+Your database is now in sync with your Prisma schema. Done in 455ms
+
+Running generate... (Use --skip-generate to skip the generators)
+[2K[1A[2K[GRunning generate... - Prisma Client
+[2K[1A[2K[G✔ Generated Prisma Client (6.19.1) to .\src\generated\prisma in 497ms
+
+] Prisma db push result:
+2026-03-05T23:08:09.149Z INFO Database initialized successfully
+2026-03-05T23:08:09.151Z INFO [Migration] Checking for database migration...
+2026-03-05T23:08:10.080Z INFO [Migration] No migration needed
+2026-03-05T23:08:10.291Z INFO Starting right sidebar creation...
+2026-03-05T23:08:10.293Z INFO Initializing MainProvider...
+2026-03-05T23:08:10.294Z INFO Updating user profile...
+2026-03-05T23:08:12.607Z INFO Creating right panel...
+2026-03-05T23:08:12.611Z INFO Creating right panel...
+2026-03-05T23:08:12.613Z INFO Closing all existing tabs...
+2026-03-05T23:08:12.712Z INFO Right panel webview created
+2026-03-05T23:08:12.741Z INFO Right panel HTML set successfully
+2026-03-05T23:08:12.746Z INFO Right panel setup completed
+2026-03-05T23:08:12.756Z INFO Setting up right panel dependencies...
+2026-03-05T23:08:12.823Z INFO Right panel dependencies setup complete, waiting for ready signal...
+2026-03-05T23:08:15.672Z INFO [Message Router] Routing rightPanelReady through unified router
+2026-03-05T23:08:15.761Z INFO [Message Router] Routing getProjects through unified router
+2026-03-05T23:08:15.780Z INFO [Message Router] Routing getDeployments through unified router
+2026-03-05T23:08:15.820Z INFO [Message Router] Routing rightBarRendered through unified router
+2026-03-05T23:08:15.824Z INFO Right panel setup completed successfully
+2026-03-05T23:08:15.826Z INFO Right panel created via MainProvider
+2026-03-05T23:08:15.829Z INFO Storing initial prompt...
+2026-03-05T23:08:15.832Z INFO Tracing first panel open...
+2026-03-05T23:08:15.835Z INFO Right sidebar setup completed successfully
+2026-03-05T23:08:15.839Z INFO [Message Router] Routing checkEnv through unified router
+2026-03-05T23:08:16.729Z INFO Successfully posted projects to Pythagora API
+2026-03-05T23:08:23.490Z INFO [Message Router] Routing updateUserChoice through unified router
+2026-03-05T23:08:23.492Z INFO [Message Router] Routing traceTelemetry through unified router
+2026-03-05T23:08:23.493Z INFO [Message Router] Routing openUrlInBrowser through unified router
+2026-03-05T23:09:12.244Z INFO Closing entire Pythagora extension...
+2026-03-05T23:09:12.246Z INFO Right panel disposed, triggering cleanup...
+2026-03-05T23:09:12.247Z INFO Right panel disposed, cleaning up...
+2026-03-05T23:09:12.247Z INFO [Message Router] Routing coreExited through unified router
+2026-03-05T23:09:12.253Z INFO Closing entire Pythagora extension...
+2026-03-05T23:09:12.255Z ERROR Error closing extension
+Error: Canceled
+Stack: Canceled: Canceled
+	at new iI (file:///c:/Users/Digital%20adwords/AppData/Local/Programs/Microsoft%20VS%20Code/0870c2a0c7/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:407:147604)
+	at r._remoteCall (file:///c:/Users/Digital%20adwords/AppData/Local/Programs/Microsoft%20VS%20Code/0870c2a0c7/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:407:153656)
+	at i.<computed>.s.charCodeAt.i.<computed> (file:///c:/Users/Digital%20adwords/AppData/Local/Programs/Microsoft%20VS%20Code/0870c2a0c7/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:407:150451)
+	at Jm._doExecuteCommand (file:///c:/Users/Digital%20adwords/AppData/Local/Programs/Microsoft%20VS%20Code/0870c2a0c7/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:494:48120)
+	at Jm.executeCommand (file:///c:/Users/Digital%20adwords/AppData/Local/Programs/Microsoft%20VS%20Code/0870c2a0c7/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:494:47567)
+	at Object.executeCommand (file:///c:/Users/Digital%20adwords/AppData/Local/Programs/Microsoft%20VS%20Code/0870c2a0c7/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:588:129159)
+	at closeEntirePythagoraExtension (c:\Users\Digital adwords\.vscode\extensions\pythagoratechnologies.pythagora-vs-code-2.6.19\out\extension.js:542:31)
+	at Object.deactivate (c:\Users\Digital adwords\.vscode\extensions\pythagoratechnologies.pythagora-vs-code-2.6.19\out\extension.js:409:15)
+	at lk._deactivate (file:///c:/Users/Digital%20adwords/AppData/Local/Programs/Microsoft%20VS%20Code/0870c2a0c7/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:498:14479)
+	at file:///c:/Users/Digital%20adwords/AppData/Local/Programs/Microsoft%20VS%20Code/0870c2a0c7/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:498:12006
+	at Array.map (<anonymous>)
+	at lk._deactivateAll (file:///c:/Users/Digital%20adwords/AppData/Local/Programs/Microsoft%20VS%20Code/0870c2a0c7/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:498:11994)
+	at lk.terminate (file:///c:/Users/Digital%20adwords/AppData/Local/Programs/Microsoft%20VS%20Code/0870c2a0c7/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:498:12345)
+	at r.terminate (file:///c:/Users/Digital%20adwords/AppData/Local/Programs/Microsoft%20VS%20Code/0870c2a0c7/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:500:1072)
+	at Os (file:///c:/Users/Digital%20adwords/AppData/Local/Programs/Microsoft%20VS%20Code/0870c2a0c7/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:780:11691)
+	at MessagePortMain.<anonymous> (file:///c:/Users/Digital%20adwords/AppData/Local/Programs/Microsoft%20VS%20Code/0870c2a0c7/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:780:8122)
+	at MessagePortMain.emit (node:events:519:28)
+	at MessagePortMain._internalPort.emit (node:electron/js2c/utility_init:2:2959)
+Extra context: {
+  "message": "Canceled"
+}
+2026-03-05T23:09:12.273Z ERROR Error closing extension
+Error: Canceled
+Stack: Canceled: Canceled
+	at new iI (file:///c:/Users/Digital%20adwords/AppData/Local/Programs/Microsoft%20VS%20Code/0870c2a0c7/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:407:147604)
+	at r._remoteCall (file:///c:/Users/Digital%20adwords/AppData/Local/Programs/Microsoft%20VS%20Code/0870c2a0c7/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:407:153656)
+	at i.<computed>.s.charCodeAt.i.<computed> (file:///c:/Users/Digital%20adwords/AppData/Local/Programs/Microsoft%20VS%20Code/0870c2a0c7/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:407:150451)
+	at Jm._doExecuteCommand (file:///c:/Users/Digital%20adwords/AppData/Local/Programs/Microsoft%20VS%20Code/0870c2a0c7/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:494:48120)
+	at Jm.executeCommand (file:///c:/Users/Digital%20adwords/AppData/Local/Programs/Microsoft%20VS%20Code/0870c2a0c7/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:494:47567)
+	at Object.executeCommand (file:///c:/Users/Digital%20adwords/AppData/Local/Programs/Microsoft%20VS%20Code/0870c2a0c7/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:588:129159)
+	at closeEntirePythagoraExtension (c:\Users\Digital adwords\.vscode\extensions\pythagoratechnologies.pythagora-vs-code-2.6.19\out\extension.js:542:31)
+	at MainProvider.handleRightPanelDispose (c:\Users\Digital adwords\.vscode\extensions\pythagoratechnologies.pythagora-vs-code-2.6.19\out\providers\MainProvider.js:143:65)
+	at async Vu.value (c:\Users\Digital adwords\.vscode\extensions\pythagoratechnologies.pythagora-vs-code-2.6.19\out\managers\WebviewManager.js:63:17)
+Extra context: {
+  "message": "Canceled"
+}

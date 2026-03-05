@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Role, View, Staff, InventoryItem, Invoice, Candidate, JobSheet, AttendanceRecord, PurchaseOrder, StockTransfer, Vendor, AuthUser, LoginCredentials } from './types.ts';
 import Layout from './components/Layout.tsx';
@@ -24,6 +23,31 @@ const Login: React.FC<{ onLogin: (user: AuthUser) => void; onBack: () => void }>
   const [showRoleMenu, setShowRoleMenu] = useState(false);
   const [openUp, setOpenUp] = useState(false);
   const roleMenuRef = React.useRef<HTMLDivElement>(null);
+    // State to check if admin password is missing
+    const [adminNeedsPassword, setAdminNeedsPassword] = useState(false);
+
+    useEffect(() => {
+      const users = authService.getUsers();
+      const admin = users.find(u => u.email === 'admin@tech2wizard.com');
+      setAdminNeedsPassword(admin && !admin.passwordHash);
+    }, []);
+
+    const handleSetAdminPassword = () => {
+      const users = authService.getUsers();
+      const admin = users.find(u => u.email === 'admin@tech2wizard.com');
+      if (admin) {
+        authService.setPassword(admin.id, password);
+        setError('Admin password has been reset. You can now log in.');
+      } else {
+        setError('Admin user not found.');
+      }
+    };
+
+    const handleInitDefaultUsers = () => {
+      window.localStorage.removeItem('crm_users_db');
+      authService.getUsers();
+      setError('Default users initialized. Try setting the admin password again.');
+    };
 
   const roleLabel = (r: Role) => {
     if (r === 'MASTER_ADMIN') return 'Head Office';
@@ -141,6 +165,7 @@ const Login: React.FC<{ onLogin: (user: AuthUser) => void; onBack: () => void }>
                 </div>
                 <input 
                   type="email" 
+                  id="login-email" name="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="admin@tech2wizard.com" 
@@ -154,6 +179,8 @@ const Login: React.FC<{ onLogin: (user: AuthUser) => void; onBack: () => void }>
                     <Building2 className="w-5 h-5 text-[#f65b13]" />
                   </div>
                   <select
+                    id="login-store"
+                    name="storeId"
                     value={storeId}
                     onChange={(e) => setStoreId(e.target.value)}
                     required
@@ -172,6 +199,7 @@ const Login: React.FC<{ onLogin: (user: AuthUser) => void; onBack: () => void }>
                 </div>
                 <input 
                   type={showPassword ? 'text' : 'password'} 
+                  id="login-password" name="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••" 
@@ -229,6 +257,24 @@ const Login: React.FC<{ onLogin: (user: AuthUser) => void; onBack: () => void }>
                 >
                   {loading ? 'Authorizing…' : 'Sign In'}
                 </button>
+                {email === 'admin@tech2wizard.com' && (
+                  <button
+                    type="button"
+                    onClick={handleSetAdminPassword}
+                    className="px-4 py-2 bg-[#f65b13] text-white rounded-2xl text-xs font-black uppercase tracking-widest ml-2 hover:bg-white hover:text-black transition-all active:scale-95"
+                  >
+                    Set Admin Password
+                  </button>
+                )}
+                {email === 'admin@tech2wizard.com' && (
+                  <button
+                    type="button"
+                    onClick={handleInitDefaultUsers}
+                    className="px-4 py-2 bg-[#f65b13] text-white rounded-2xl text-xs font-black uppercase tracking-widest ml-2 hover:bg-white hover:text-black transition-all active:scale-95"
+                  >
+                    Initialize Default Users
+                  </button>
+                )}
               </div>
             </form>
           </div>

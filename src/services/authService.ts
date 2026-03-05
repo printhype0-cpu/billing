@@ -112,9 +112,13 @@ export const authService = {
         storage.setItem(USERS_KEY, JSON.stringify(users));
       }
       return authUser;
-    } catch {
+    } catch (err: any) {
+      // log for diagnostics (won't harm production)
+      console.error('authService.login error', err);
+      const message = err?.message || 'Login failed';
       if (typeof process !== 'undefined' && process.env && process.env.NODE_ENV === 'production') {
-        throw new Error('Login failed');
+        // surface the actual message instead of a hardcoded string
+        throw new Error(message);
       }
       // Fallback to local demo mode (dev only)
       const users = authService.getUsers();
