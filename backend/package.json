@@ -10,7 +10,8 @@
     "start:prod": "node dist/main.js",
     "db:init": "node --loader ts-node/esm src/scripts/init-db.ts",
     "db:init:mysql": "node --loader ts-node/esm src/scripts/init-mysql.ts",
-    "bootstrap:admin": "node --loader ts-node/esm src/scripts/bootstrap-admin.ts"
+    "bootstrap:admin": "node --loader ts-node/esm src/scripts/bootstrap-admin.ts",
+    "test": "set NODE_ENV=test&& tsc && node dist/tests/run-tests.js"
   },
   "dependencies": {
     "@nestjs/common": "^10.3.10",

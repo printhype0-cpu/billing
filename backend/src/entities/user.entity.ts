@@ -19,4 +19,7 @@ export class User {
 
   @Column({ nullable: true })
   passwordHash?: string;
+
+  @Column({ nullable: true })
+  storeId?: string;
 }

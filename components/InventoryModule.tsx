@@ -15,6 +15,7 @@ import {
   LayoutGrid, List
 } from 'lucide-react';
 import { draftVendorEmail, draftBulkRestockEmail } from '../services/geminiService.ts';
+import { inventoryService } from '../src/services/inventoryService.ts';
 
 interface InventoryModuleProps {
   role: Role;
@@ -190,7 +191,7 @@ const InventoryModule: React.FC<InventoryModuleProps> = ({
     window.URL.revokeObjectURL(url);
   };
 
-  const handleExcelUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleExcelUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
@@ -200,8 +201,22 @@ const InventoryModule: React.FC<InventoryModuleProps> = ({
     }
 
     setIsImporting(true);
+    const text = await file.text();
+
+    // try backend import
+    try {
+      const result = await inventoryService.importCsv(text);
+      notifySuccess && notifySuccess(`Imported ${result.created} items (${result.updated} updated, ${result.skipped} skipped)`);
+      const all = await inventoryService.fetchAll();
+      if (all && all.length) setItems(all as InventoryItem[]);
+      setIsImporting(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      return;
+    } catch (err) {
+      console.warn('backend import failed, falling back to client parser', err);
+    }
+
     const reader = new FileReader();
-    
     reader.onload = (e) => {
         try {
             const text = e.target?.result as string;
@@ -210,8 +225,15 @@ const InventoryModule: React.FC<InventoryModuleProps> = ({
             const lines = text.split('\n').map(l => l.trim()).filter(l => l);
             if (lines.length < 2) throw new Error("File contains no data rows");
 
-            const headers = lines[0].split(',').map(h => h.trim().toLowerCase().replace(/\s/g, ''));
-            const newItems: InventoryItem[] = [];
+            let headers = lines[0].split(',').map(h => h.trim().toLowerCase().replace(/\s/g, ''));
+            const required = ['name', 'sku'];
+            const missing = required.filter(r => !headers.includes(r));
+            if (missing.length) {
+                alert(`Missing required column(s): ${missing.join(', ')}. Please use the template.`);
+                return;
+            }
+
+            const rawItems: InventoryItem[] = [];
 
             for(let i = 1; i < lines.length; i++) {
                 const values = lines[i].split(',').map(v => v.trim());
@@ -223,7 +245,7 @@ const InventoryModule: React.FC<InventoryModuleProps> = ({
                 });
 
                 if (item.name && item.sku) {
-                    newItems.push({
+                    rawItems.push({
                         id: `IMP-${Date.now()}-${i}-${Math.floor(Math.random() * 1000)}`,
                         name: item.name,
                         sku: item.sku,
@@ -238,9 +260,30 @@ const InventoryModule: React.FC<InventoryModuleProps> = ({
                 }
             }
 
-            if (newItems.length > 0) {
-                setItems(prev => [...prev, ...newItems]);
-                alert(`Successfully imported ${newItems.length} items from ${file.name}`);
+            // filter duplicates against existing items and within file
+            const existingNames = new Set(items.map(i => i.name.toLowerCase()));
+            const existingSkus = new Set(items.map(i => i.sku.toLowerCase()));
+            const unique: InventoryItem[] = [];
+            const skipped: string[] = [];
+            rawItems.forEach(it => {
+                const nameKey = it.name.toLowerCase();
+                const skuKey = it.sku.toLowerCase();
+                if (existingNames.has(nameKey) || existingSkus.has(skuKey)) {
+                    skipped.push(it.name);
+                } else {
+                    existingNames.add(nameKey);
+                    existingSkus.add(skuKey);
+                    unique.push(it);
+                }
+            });
+
+            if (skipped.length) {
+                alert(`Skipped ${skipped.length} duplicate item(s): ${skipped.join(', ')}`);
+            }
+
+            if (unique.length > 0) {
+                setItems(prev => [...prev, ...unique]);
+                alert(`Successfully imported ${unique.length} item(s) from ${file.name}`);
             } else {
                 alert("No valid items found in the file. Please check the format.");
             }
@@ -293,12 +336,19 @@ const InventoryModule: React.FC<InventoryModuleProps> = ({
             const lines = text.split('\n').map(l => l.trim()).filter(l => l);
             if (lines.length < 2) throw new Error("File contains no data rows");
 
-            const headers = lines[0].split(',').map(h => h.trim().toLowerCase().replace(/\s/g, ''));
-            const newItems: InventoryItem[] = [];
+            let headers = lines[0].split(',').map(h => h.trim().toLowerCase().replace(/\s/g, ''));
+            const required = ['name'];
+            const missing = required.filter(r => !headers.includes(r));
+            if (missing.length) {
+                alert(`Missing required column(s): ${missing.join(', ')}. Please use the template.`);
+                return;
+            }
+
+            const rawItems: InventoryItem[] = [];
 
             for(let i = 1; i < lines.length; i++) {
                 const values = lines[i].split(',').map(v => v.trim());
-                if (values.length < 2) continue;
+                if (values.length < 1) continue;
 
                 const item: any = {};
                 headers.forEach((h, index) => {
@@ -306,7 +356,7 @@ const InventoryModule: React.FC<InventoryModuleProps> = ({
                 });
 
                 if (item.name) {
-                    newItems.push({
+                    rawItems.push({
                         id: `V-IMP-${Date.now()}-${i}-${Math.floor(Math.random() * 1000)}`,
                         name: item.name,
                         sku: item.sku || `V-${selectedVendor.id}-${Math.random().toString(36).substr(2, 5).toUpperCase()}`,
@@ -321,9 +371,26 @@ const InventoryModule: React.FC<InventoryModuleProps> = ({
                 }
             }
 
-            if (newItems.length > 0) {
-                setItems(prev => [...prev, ...newItems]);
-                alert(`Successfully imported ${newItems.length} items for ${selectedVendor.name}`);
+            // dedupe against existing and within file
+            const existingNames = new Set(items.map(i => i.name.toLowerCase()));
+            const unique: InventoryItem[] = [];
+            const skipped: string[] = [];
+            rawItems.forEach(it => {
+                const key = it.name.toLowerCase();
+                if (existingNames.has(key)) {
+                    skipped.push(it.name);
+                } else {
+                    existingNames.add(key);
+                    unique.push(it);
+                }
+            });
+            if (skipped.length) {
+                alert(`Skipped ${skipped.length} duplicate item(s): ${skipped.join(', ')}`);
+            }
+
+            if (unique.length > 0) {
+                setItems(prev => [...prev, ...unique]);
+                alert(`Successfully imported ${unique.length} items for ${selectedVendor.name}`);
             } else {
                 alert("No valid items found in the file.");
             }

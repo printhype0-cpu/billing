@@ -17,13 +17,24 @@ async function main() {
       role VARCHAR(64) NOT NULL,
       avatar TEXT,
       email VARCHAR(255) NOT NULL UNIQUE,
-      passwordHash VARCHAR(128) NULL
+      passwordHash VARCHAR(128) NULL,
+      storeId VARCHAR(64) NULL
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
   `);
   await conn.query(`
     CREATE TABLE IF NOT EXISTS user_passwords (
       userId VARCHAR(64) PRIMARY KEY,
       passwordHash VARCHAR(128) NULL
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+  `);
+  await conn.query(`
+    CREATE TABLE IF NOT EXISTS stores (
+      id VARCHAR(64) PRIMARY KEY,
+      name VARCHAR(255) NOT NULL,
+      address TEXT NULL,
+      phone VARCHAR(64) NULL,
+      gst VARCHAR(64) NULL,
+      active TINYINT(1) NOT NULL DEFAULT 1
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
   `);
   await conn.query(`

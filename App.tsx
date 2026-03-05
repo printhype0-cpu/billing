@@ -60,12 +60,46 @@ const Login: React.FC<{ onLogin: (user: AuthUser) => void; onBack: () => void }>
     };
   }, []);
 
+  // resolve stores for store-scoped login
+  const getStores = (): Array<{ id: string; name: string }> => {
+    try {
+      const saved = typeof window !== 'undefined' ? window.localStorage.getItem('crm_stores') : null;
+      if (saved) return JSON.parse(saved);
+    } catch {}
+    return [
+      { id: '1', name: 'Downtown Branch' },
+      { id: '2', name: 'Northgate Branch' },
+      { id: '3', name: 'Head Office' }
+    ];
+  };
+  const [storeId, setStoreId] = useState<string>('');
+  const [stores, setStores] = useState<Array<{ id: string; name: string }>>([]);
+
+  React.useEffect(() => {
+    let mounted = true;
+    const load = async () => {
+      try {
+        const base = authService.apiBase ? authService.apiBase() : '';
+        const url = base ? `${base}/stores` : '/stores';
+        const res = await fetch(url);
+        if (res.ok) {
+          const data = await res.json();
+          if (mounted) setStores(data);
+          return;
+        }
+      } catch {}
+      if (mounted) setStores(getStores());
+    };
+    load();
+    return () => { mounted = false; };
+  }, []);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
     try {
-      const creds: LoginCredentials = { email, password, role };
+      const creds: LoginCredentials = { email, password, role, storeId: role === 'MASTER_ADMIN' ? undefined : (storeId || undefined) };
       const user = await authService.login(creds);
       onLogin(user);
     } catch (e: any) {
@@ -114,6 +148,24 @@ const Login: React.FC<{ onLogin: (user: AuthUser) => void; onBack: () => void }>
                   required
                 />
               </div>
+              {role !== 'MASTER_ADMIN' && (
+                <div className="flex items-center p-4 bg-white/5 border border-white/10 rounded-2xl">
+                  <div className="p-2 bg-[#f65b13]/20 rounded-xl mr-4">
+                    <Building2 className="w-5 h-5 text-[#f65b13]" />
+                  </div>
+                  <select
+                    value={storeId}
+                    onChange={(e) => setStoreId(e.target.value)}
+                    required
+                    className="flex-1 bg-transparent text-white text-sm focus:outline-none"
+                  >
+                    <option value="" disabled>Select Branch</option>
+                    {stores.map(s => (
+                      <option key={s.id} value={s.id} className="text-black">{s.name}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
               <div className="flex items-center p-4 bg-white/5 border border-white/10 rounded-2xl">
                 <div className="p-2 bg-[#f65b13]/20 rounded-xl mr-4">
                   <Lock className="w-5 h-5 text-[#f65b13]" />

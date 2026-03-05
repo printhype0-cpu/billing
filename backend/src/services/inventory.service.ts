@@ -23,4 +23,13 @@ export class InventoryService {
       return process.env.NODE_ENV === 'production' ? [] : DEFAULT_ITEMS;
     }
   }
+
+  findBySku(sku: string): Promise<InventoryItem | null> {
+    return this.repo.findOne({ where: { sku } });
+  }
+
+  async upsert(item: InventoryItem): Promise<InventoryItem> {
+    await this.repo.save(item);
+    return item;
+  }
 }

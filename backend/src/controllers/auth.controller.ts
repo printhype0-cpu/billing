@@ -16,6 +16,9 @@ class LoginDto {
   @IsOptional()
   @IsIn(['MASTER_ADMIN', 'STORE_MANAGER', 'INVENTORY_LEAD', 'SALES_HEAD'])
   role?: Role;
+  @IsOptional()
+  @IsString()
+  storeId?: string;
 }
 
 @Controller('auth')
@@ -44,7 +47,20 @@ export class AuthController {
       const match = hashPassword(body.password) === storedHash;
       if (!match) return { error: 'Password incorrect' };
     }
-    const token = sign({ sub: user.id, role: user.role });
+    // store scoping for non-admin roles
+    // @ts-ignore
+    if (user.role !== 'MASTER_ADMIN') {
+      const requestedStore = body.storeId || null;
+      // @ts-ignore
+      const userStore = user.storeId || null;
+      if (userStore && requestedStore && userStore !== requestedStore) {
+        return { error: 'Store mismatch' };
+      }
+      if (!requestedStore && userStore) {
+        return { error: 'Store required' };
+      }
+    }
+    const token = sign({ sub: user.id, role: user.role, storeId: (user as any).storeId || body.storeId || null });
     return { user: { ...user, token } };
   }
 

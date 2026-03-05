@@ -56,6 +56,7 @@ export interface LoginCredentials {
   email: string;
   password?: string;
   role?: Role; // For the simplified login
+  storeId?: string; // For store-scoped authentication
 }
 
 export interface CandidateDocument {

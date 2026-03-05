@@ -28,4 +28,7 @@ export class InventoryItem {
 
   @Column('int')
   reorderLevel!: number;
+
+  @Column({ nullable: true })
+  uploadDate?: string;
 }

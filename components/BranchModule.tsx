@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { Role, Staff } from '../types.ts';
 import { 
   Building2, MapPin, Save, Users, ShieldAlert, ToggleLeft, ToggleRight, 
@@ -10,6 +10,7 @@ import {
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell 
 } from 'recharts';
+import { storesService } from '../src/services/storesService.ts';
 
 interface BranchModuleProps {
   role: Role;
@@ -45,6 +46,94 @@ const BranchModule: React.FC<BranchModuleProps> = ({ role, stores, setStores, st
   const [showAddModal, setShowAddModal] = useState(false);
   const [formData, setFormData] = useState({ name: '', address: '', phone: '', gst: '' });
   const [reassigningStaffId, setReassigningStaffId] = useState<string | null>(null);
+  const isAdmin = role === 'MASTER_ADMIN';
+  const csvInputRef = useRef<HTMLInputElement>(null);
+
+  // attempt to download CSV from backend endpoint, fallback to client-state export
+  const exportCsv = async () => {
+    try {
+      const res = await fetch('/stores/export');
+      if (res.ok) {
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'branches.csv';
+        a.click();
+        URL.revokeObjectURL(url);
+        return;
+      }
+    } catch (e) {
+      console.warn('backend export failed, falling back to client', e);
+    }
+    const headers = ['id','name','address','phone','gst','active'];
+    const lines = [headers.join(',')].concat(
+      stores.map(s => {
+        const vals = [s.id, s.name, s.address || '', s.phone || '', s.gst || '', String(!!s.active)];
+        return vals.map(v => {
+          const str = String(v ?? '');
+          if (/[",\n]/.test(str)) return `"${str.replace(/"/g, '""')}"`;
+          return str;
+        }).join(',');
+      })
+    );
+    const blob = new Blob([lines.join('\n')], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'branches.csv';
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const downloadTemplate = () => {
+    const headers = 'id,name,address,phone,gst,active';
+    const example = '1,Downtown Branch,123 Main St,(555) 123-4567,GST-001,true';
+    const blob = new Blob([`${headers}\n${example}`], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'branches_template.csv';
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleImportCsv = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !isAdmin) return;
+    const csv = await file.text();
+    try {
+      const result = await storesService.importCsv(csv);
+      notifySuccess && notifySuccess(`Imported: ${result.created} created, ${result.updated} updated, ${result.skipped} skipped`);
+      const refreshed = await storesService.fetchAll();
+      if (refreshed && refreshed.length) {
+        setStores(refreshed.map(s => ({ id: s.id, name: s.name, address: s.address || '', phone: s.phone || '', gst: s.gst || '', active: s.active })));
+      }
+    } catch (err: any) {
+      alert(err.message || 'Import failed');
+    } finally {
+      if (csvInputRef.current) csvInputRef.current.value = '';
+    }
+  };
+
+  useEffect(() => {
+    (async () => {
+      const list = await storesService.fetchAll();
+      if (list && list.length) {
+        setStores(list.map(s => ({ id: s.id, name: s.name, address: s.address || '', phone: s.phone || '', gst: s.gst || '', active: s.active })));
+      } else if (role === 'MASTER_ADMIN' && stores && stores.length) {
+        // Seed backend with existing local stores if backend is empty and user is admin
+        for (const st of stores) {
+          await storesService.upsert({ id: st.id, name: st.name, address: st.address, phone: st.phone, gst: st.gst, active: st.active !== false });
+        }
+        const after = await storesService.fetchAll();
+        if (after && after.length) {
+          setStores(after.map(s => ({ id: s.id, name: s.name, address: s.address || '', phone: s.phone || '', gst: s.gst || '', active: s.active })));
+          notifySuccess && notifySuccess('Branches synced to server');
+        }
+      } 
+    })();
+  }, []);
 
   // State for Access Control Configuration
   const [configuringRole, setConfiguringRole] = useState<RoleAccess | null>(null);
@@ -119,10 +208,14 @@ const BranchModule: React.FC<BranchModuleProps> = ({ role, stores, setStores, st
   // Floating staff are those not assigned to any listed store name
   const floatingStaff = staffList.filter(s => !stores.some(st => st.name === s.store));
 
-  const handleSave = () => {
+  const handleSave = async () => {
+    if (!isAdmin) return;
     if (!formData.name) return;
     
     if (editingStore) {
+        const updated = { ...editingStore, ...formData };
+        const saved = await storesService.upsert({ id: updated.id, name: updated.name, address: updated.address, phone: updated.phone, gst: updated.gst, active: updated.active !== false });
+        if (!saved) return;
         setStores(prev => prev.map(s => s.id === editingStore.id ? { ...s, ...formData } : s));
         setEditingStore(null);
     } else {
@@ -132,6 +225,8 @@ const BranchModule: React.FC<BranchModuleProps> = ({ role, stores, setStores, st
           active: true, 
           manager: 'Unassigned' 
         };
+        const saved = await storesService.upsert({ id: newStore.id, name: newStore.name, address: newStore.address, phone: newStore.phone, gst: newStore.gst, active: true });
+        if (!saved) return;
         setStores(prev => [...prev, newStore]);
     }
     setFormData({ name: '', address: '', phone: '', gst: '' });
@@ -139,13 +234,24 @@ const BranchModule: React.FC<BranchModuleProps> = ({ role, stores, setStores, st
     notifySuccess && notifySuccess(editingStore ? 'Updated successfully' : 'Saved successfully');
   };
 
-  const toggleStatus = (id: string) => {
-    setStores(prev => prev.map(s => s.id === id ? { ...s, active: !s.active } : s));
+  const toggleStatus = async (id: string) => {
+    if (!isAdmin) return;
+    const found = stores.find(s => s.id === id);
+    if (!found) return;
+    const next = { ...found, active: !found.active };
+    const saved = await storesService.upsert({ id: next.id, name: next.name, address: next.address, phone: next.phone, gst: next.gst, active: next.active });
+    if (!saved) return;
+    setStores(prev => prev.map(s => s.id === id ? next : s));
   };
 
-  const handleDeleteStore = (id: string) => {
+  const handleDeleteStore = async (id: string) => {
+    if (!isAdmin) return;
     if (window.confirm("Are you sure? Removing a branch will move its assigned staff to the Floating Pool.")) {
-        setStores(prev => prev.filter(s => s.id !== id));
+        const ok = await storesService.remove(id);
+        if (ok) {
+          setStores(prev => prev.filter(s => s.id !== id));
+          notifySuccess && notifySuccess('Deleted successfully');
+        }
     }
   };
 
@@ -201,9 +307,11 @@ const BranchModule: React.FC<BranchModuleProps> = ({ role, stores, setStores, st
             <h3 className="text-lg font-bold text-slate-800">No Branches Found</h3>
             <p className="text-slate-500 text-sm">Add your first branch to begin.</p>
           </div>
-          <button onClick={() => setShowAddModal(true)} className="px-5 py-3 bg-[#000000] text-white rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-[#f65b13] transition-all active:scale-95">
-            Add Branch
-          </button>
+          {isAdmin && (
+            <button onClick={() => setShowAddModal(true)} className="px-5 py-3 bg-[#000000] text-white rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-[#f65b13] transition-all active:scale-95">
+              Add Branch
+            </button>
+          )}
         </div>
       </div>
     );
@@ -224,13 +332,38 @@ const BranchModule: React.FC<BranchModuleProps> = ({ role, stores, setStores, st
               <h3 className="text-xl font-black text-slate-800 tracking-tight uppercase">Retail Network</h3>
               <p className="text-sm text-slate-500">Manage global store locations and identification data</p>
            </div>
-           <button 
-             onClick={() => { setFormData({ name: '', address: '', phone: '', gst: '' }); setEditingStore(null); setShowAddModal(true); }} 
-             className="flex items-center space-x-2 bg-[#f65b13] text-white px-5 py-2.5 rounded-xl font-bold shadow-lg shadow-[#f65b13]/20 hover:bg-[#000000] transition-all active:scale-95 text-sm uppercase tracking-widest"
-           >
-             <Plus className="w-4 h-4" />
-             <span>Add New Branch</span>
-           </button>
+           <div className="flex items-center gap-2">
+             {isAdmin && (
+               <>
+                 <button 
+                   onClick={() => { setFormData({ name: '', address: '', phone: '', gst: '' }); setEditingStore(null); setShowAddModal(true); }} 
+                   className="flex items-center space-x-2 bg-[#f65b13] text-white px-4 py-2 rounded-xl font-bold shadow-lg shadow-[#f65b13]/20 hover:bg-[#000000] transition-all active:scale-95 text-xs uppercase tracking-widest"
+                 >
+                   <Plus className="w-4 h-4" />
+                   <span>Add</span>
+                 </button>
+                 <button 
+                   onClick={exportCsv}
+                   className="px-4 py-2 rounded-xl border border-slate-200 text-xs font-bold hover:bg-slate-50"
+                 >
+                   Export CSV
+                 </button>
+                 <button 
+                   onClick={downloadTemplate}
+                   className="px-4 py-2 rounded-xl border border-slate-200 text-xs font-bold hover:bg-slate-50"
+                 >
+                   CSV Template
+                 </button>
+                 <button 
+                   onClick={() => csvInputRef.current?.click()}
+                   className="px-4 py-2 rounded-xl border border-slate-200 text-xs font-bold hover:bg-slate-50"
+                 >
+                   Import CSV
+                 </button>
+                 <input ref={csvInputRef} type="file" accept=".csv,text/csv" onChange={handleImportCsv} className="hidden" />
+               </>
+             )}
+           </div>
         </div>
 
         {/* Performance Chart Section */}

@@ -5,11 +5,20 @@ CREATE TABLE IF NOT EXISTS users (
   role TEXT NOT NULL,
   avatar TEXT,
   email TEXT NOT NULL UNIQUE,
-  passwordHash TEXT NULL
+  passwordHash TEXT NULL,
+  storeId TEXT NULL
 );
 CREATE TABLE IF NOT EXISTS user_passwords (
   userId TEXT PRIMARY KEY,
   passwordHash TEXT NULL
+);
+CREATE TABLE IF NOT EXISTS stores (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  address TEXT NULL,
+  phone TEXT NULL,
+  gst TEXT NULL,
+  active INTEGER NOT NULL DEFAULT 1
 );
 CREATE TABLE IF NOT EXISTS inventory_items (
   id TEXT PRIMARY KEY,

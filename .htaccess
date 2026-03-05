@@ -2,12 +2,15 @@ Options -Indexes
 
 <IfModule mod_rewrite.c>
 RewriteEngine On
+RewriteBase /
 
 # Explicit default index to avoid 403 when directory listing is disabled
 DirectoryIndex index.html index.htm
 
 # Force HTTPS
+# Respect proxies/load balancers that terminate SSL
 RewriteCond %{HTTPS} !=on
+RewriteCond %{HTTP:X-Forwarded-Proto} !https
 RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
 
 # Serve existing files and directories
@@ -15,13 +18,18 @@ RewriteCond %{REQUEST_FILENAME} -f [OR]
 RewriteCond %{REQUEST_FILENAME} -d
 RewriteRule ^ - [L]
 
+# Prevent rewrite loop on index.html
+RewriteRule ^index\.html$ - [L]
+
 # Allow Next.js static assets
 RewriteRule ^_next/ - [L]
 RewriteRule ^static/ - [L]
 RewriteRule ^assets/ - [L]
 
 # Single Page App fallback
-RewriteRule ^ index.html [L]
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule . /index.html [L]
 </IfModule>
 
 # Optional caching for static assets
