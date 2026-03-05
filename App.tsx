@@ -29,7 +29,7 @@ const Login: React.FC<{ onLogin: (user: AuthUser) => void; onBack: () => void }>
     useEffect(() => {
       const users = authService.getUsers();
       const admin = users.find(u => u.email === 'admin@tech2wizard.com');
-      setAdminNeedsPassword(admin && !admin.passwordHash);
+      setAdminNeedsPassword(!!(admin && !admin.passwordHash));
     }, []);
 
     const handleSetAdminPassword = () => {
