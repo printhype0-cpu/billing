@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "prebuild": "chmod +x ./node_modules/.bin/next || exit 0",
+    
     "dev": "node ./node_modules/next/dist/bin/next dev -p 3001",
     "build": "node ./node_modules/next/dist/bin/next build",
     "export": "node ./node_modules/next/dist/bin/next export",
