@@ -257,24 +257,7 @@ const Login: React.FC<{ onLogin: (user: AuthUser) => void; onBack: () => void }>
                 >
                   {loading ? 'Authorizing…' : 'Sign In'}
                 </button>
-                {email === 'admin@tech2wizard.com' && (
-                  <button
-                    type="button"
-                    onClick={handleSetAdminPassword}
-                    className="px-4 py-2 bg-[#f65b13] text-white rounded-2xl text-xs font-black uppercase tracking-widest ml-2 hover:bg-white hover:text-black transition-all active:scale-95"
-                  >
-                    Set Admin Password
-                  </button>
-                )}
-                {email === 'admin@tech2wizard.com' && (
-                  <button
-                    type="button"
-                    onClick={handleInitDefaultUsers}
-                    className="px-4 py-2 bg-[#f65b13] text-white rounded-2xl text-xs font-black uppercase tracking-widest ml-2 hover:bg-white hover:text-black transition-all active:scale-95"
-                  >
-                    Initialize Default Users
-                  </button>
-                )}
+                // ...existing code...
               </div>
             </form>
           </div>
