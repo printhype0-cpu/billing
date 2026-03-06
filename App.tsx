@@ -44,7 +44,9 @@ const Login: React.FC<{ onLogin: (user: AuthUser) => void; onBack: () => void }>
     };
 
     const handleInitDefaultUsers = () => {
-      window.localStorage.removeItem('crm_users_db');
+      if (typeof window !== 'undefined') {
+        window.localStorage.removeItem('crm_users_db');
+      }
       authService.getUsers();
       setError('Default users initialized. Try setting the admin password again.');
     };
@@ -60,8 +62,11 @@ const Login: React.FC<{ onLogin: (user: AuthUser) => void; onBack: () => void }>
     const itemCount = 4;
     const itemHeight = 40;
     const desired = itemCount * itemHeight;
-    const rect = roleMenuRef.current?.getBoundingClientRect();
-    const below = rect ? (window.innerHeight - rect.bottom) : 0;
+    let below = 0;
+    if (typeof window !== 'undefined') {
+      const rect = roleMenuRef.current?.getBoundingClientRect();
+      below = rect ? (window.innerHeight - rect.bottom) : 0;
+    }
     setOpenUp(below < desired + 24);
     setShowRoleMenu(prev => !prev);
   };
@@ -76,12 +81,15 @@ const Login: React.FC<{ onLogin: (user: AuthUser) => void; onBack: () => void }>
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') setShowRoleMenu(false);
     };
-    document.addEventListener('mousedown', onDocClick);
-    document.addEventListener('keydown', onKey);
-    return () => {
-      document.removeEventListener('mousedown', onDocClick);
-      document.removeEventListener('keydown', onKey);
-    };
+    if (typeof window !== 'undefined') {
+      document.addEventListener('mousedown', onDocClick);
+      document.addEventListener('keydown', onKey);
+      return () => {
+        document.removeEventListener('mousedown', onDocClick);
+        document.removeEventListener('keydown', onKey);
+      };
+    }
+    return () => {};
   }, []);
 
   // resolve stores for store-scoped login
@@ -275,22 +283,58 @@ const App: React.FC<{ initialView?: View }> = ({ initialView }) => {
     try { return JSON.parse(saved); } catch { return saved; }
   };
 
-  const [role, setRole] = useState<Role | null>(() => {
-    const existing = authService.getCurrentUser();
-    if (existing) return existing.role;
-    if (typeof window === 'undefined') return null;
-    const r = window.localStorage.getItem('crm_user_role');
-    return r ? (r as Role) : null;
-  });
-
+  const [role, setRole] = useState<Role | null>(null);
+  const [currentView, setCurrentView] = useState<View>('DASHBOARD');
   const [showLogin, setShowLogin] = useState(false);
-  
-  const [currentView, setCurrentView] = useState<View>(() => {
-    if (initialView) return initialView;
-    if (typeof window === 'undefined') return 'DASHBOARD';
-    const saved = window.localStorage.getItem('crm_current_view') as View;
-    return saved || 'DASHBOARD';
-  });
+  const [hydrated, setHydrated] = useState(false);
+  const DEV = process.env.NODE_ENV !== 'production';
+  const [staffList, setStaffList] = useState<Staff[]>(() => getSaved('crm_staff', DEV ? MOCK_STAFF : []));
+  const [candidates, setCandidates] = useState<Candidate[]>(() => getSaved('crm_candidates', DEV ? MOCK_CANDIDATES : []));
+  const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>(() => getSaved('crm_inventory', DEV ? MOCK_INVENTORY : []));
+  const [inventoryCategories, setInventoryCategories] = useState<string[]>(() => getSaved('crm_inventory_categories', DEV ? ['Parts', 'Accessories', 'Tools', 'Devices', 'General'] : []));
+  const [invoices, setInvoices] = useState<Invoice[]>(() => getSaved('crm_invoices', DEV ? MOCK_INVOICES : []));
+  const [jobSheets, setJobSheets] = useState<JobSheet[]>(() => getSaved('crm_jobsheets', DEV ? MOCK_JOB_SHEETS : []));
+  const [attendanceData, setAttendanceData] = useState<AttendanceRecord[]>(() => getSaved('crm_attendance', []));
+  const [purchaseOrders, setPurchaseOrders] = useState<PurchaseOrder[]>(() => getSaved('crm_purchases', DEV ? MOCK_PURCHASES : []));
+  const [vendors, setVendors] = useState<Vendor[]>(() => getSaved('crm_vendors', DEV ? MOCK_VENDORS : []));
+  const [stockTransfers, setStockTransfers] = useState<StockTransfer[]>(() => getSaved('crm_transfers', DEV ? [
+    { id: 'TRF-001', itemId: '101', itemName: 'iPhone 15 Screen', sku: 'PRT-IP15-SCR', quantity: 20, source: 'Head Office', destination: 'Downtown Branch', status: 'In-Transit', initiatedBy: 'MASTER_ADMIN', date: '2023-11-20' },
+    { id: 'TRF-002', itemId: '102', itemName: 'Samsung S24 Battery', sku: 'PRT-S24-BAT', quantity: 15, source: 'Head Office', destination: 'Northgate Branch', status: 'Pending', initiatedBy: 'MASTER_ADMIN', date: '2023-11-22' }
+  ] : []));
+  const [returnLogs, setReturnLogs] = useState(() => getSaved('crm_returns', DEV ? [
+    { id: 'RET-001', customerName: 'Sameer Khan', itemName: 'iPhone 15 Screen', sku: 'PRT-IP15-SCR', date: '2023-11-20', reason: 'Defective Digitizer', status: 'Processed', actionTaken: 'Replacement' },
+    { id: 'RET-002', customerName: 'Anita Desai', itemName: 'USB-C Cable', sku: 'ACC-USBC-2M', date: '2023-11-22', reason: 'Wrong Length Ordered', status: 'Pending', actionTaken: 'Refund' }
+  ] : []));
+  const [stores, setStores] = useState(() => getSaved('crm_stores', DEV ? [
+    { id: '1', name: 'Downtown Branch', address: '123 Main St, Cityville', phone: '(555) 123-4567', gst: 'GST-001', manager: 'Alice Johnson', active: true },
+    { id: '2', name: 'Northgate Branch', address: '456 North Ave, Uptown', phone: '(555) 987-6543', gst: 'GST-002', manager: 'Open Position', active: true },
+    { id: '3', name: 'Head Office', address: '789 Corporate Way, Tech Park', phone: '(555) 555-0100', gst: 'GST-HQ-01', manager: 'Admin', active: true },
+  ] : []));
+  const [syncEnabled, setSyncEnabled] = useState(false);
+  const [toast, setToast] = useState<string | null>(null);
+  const notifySuccess = (msg: string = 'Saved successfully') => {
+    setToast(msg);
+    window.setTimeout(() => setToast(null), 1500);
+  };
+
+  useEffect(() => {
+    // Hydrate role and currentView from localStorage after mount
+    const existing = authService.getCurrentUser();
+    if (existing) setRole(existing.role);
+    else if (typeof window !== 'undefined') {
+      const r = window.localStorage.getItem('crm_user_role');
+      setRole(r ? (r as Role) : null);
+    }
+    if (typeof window !== 'undefined') {
+      const savedView = window.localStorage.getItem('crm_current_view') as View;
+      setCurrentView(savedView || 'DASHBOARD');
+    }
+    setHydrated(true);
+  }, []);
+
+  if (!hydrated) {
+    return <div style={{padding: 40, textAlign: 'center'}}>Loading...</div>;
+  }
 
   const DEV = process.env.NODE_ENV !== 'production';
   const [staffList, setStaffList] = useState<Staff[]>(() => getSaved('crm_staff', DEV ? MOCK_STAFF : []));
