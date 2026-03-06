@@ -432,7 +432,10 @@ const App: React.FC<{ initialView?: View }> = ({ initialView }) => {
     if (showLogin) {
       return <Login onLogin={handleLogin} onBack={() => setShowLogin(false)} />;
     }
-    return <LandingPage onGetStarted={() => setShowLogin(true)} />;
+    return <LandingPage onGetStarted={() => {
+      console.log('Access Portal button clicked');
+      setShowLogin(true);
+    }} />;
   }
 
   const renderContent = () => {
