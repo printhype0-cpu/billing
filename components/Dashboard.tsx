@@ -450,7 +450,7 @@ const Dashboard: React.FC<DashboardProps> = ({ role, invoices }) => {
                     <Tooltip 
                       contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)', fontWeight: 'bold' }}
                       cursor={{fill: '#f8fafc'}}
-                      formatter={(value: number) => [`₹${value.toLocaleString()}`, 'Revenue']}
+                      formatter={(value?: number) => [`₹${(value ?? 0).toLocaleString()}`, 'Revenue']}
                     />
                     <Bar 
                       dataKey="value" 
@@ -566,7 +566,7 @@ const Dashboard: React.FC<DashboardProps> = ({ role, invoices }) => {
                     <Tooltip 
                       cursor={{fill: '#f8fafc'}}
                       contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)', fontWeight: 'bold' }}
-                      formatter={(value: number) => [`₹${value.toLocaleString()}`, 'Revenue']}
+                      formatter={(value?: number) => [`₹${(value ?? 0).toLocaleString()}`, 'Revenue']}
                     />
                     <Legend iconType="circle" wrapperStyle={{ paddingTop: '20px', fontWeight: 'bold', fontSize: '12px' }} />
                     <Bar dataKey="value" name="Revenue" fill="#f65b13" radius={[4, 4, 0, 0]} barSize={40} />
